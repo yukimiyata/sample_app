@@ -15,6 +15,7 @@ class UsersController < ApplicationController
     
     if @user.save
       #success
+      log_in @user
       flash[:success] = "flash.eachのkey :success value: welcome to ~~~~"
       redirect_to @user
     else
