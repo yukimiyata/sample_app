@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  has_many :microposts, dependent: :destroy
   attr_accessor :remember_token, :activation_token, :reset_token
   attr_accessor :remember_token, :activation_token
   before_save   :downcase_email
@@ -41,25 +42,10 @@ validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
     self.update_attribute(:remember_digest, nil)
   end
   
-  # メールアドレスをすべて小文字にする
-    def downcase_email
-      self.email = email.downcase
-    end
-
-    # 有効化トークンとダイジェストを作成および代入する
-    def create_activation_digest
-      self.activation_token  = User.new_token
-      self.activation_digest = User.digest(activation_token)
-    end
-  # アカウントを有効にする
-  def activate
-    update_attribute(:activated,    true)
-    update_attribute(:activated_at, Time.zone.now)
-  end
-
-  # 有効化用のメールを送信する
-  def send_activation_email
-    UserMailer.account_activation(self).deliver_now
+  # 試作feedの定義
+  # 完全な実装は次章の「ユーザーをフォローする」を参照
+  def feed
+    Micropost.where("user_id = ?", self.id)
   end
   
   # パスワード再設定の属性を設定する
@@ -74,9 +60,34 @@ validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
     UserMailer.password_reset(self).deliver_now
   end
   
+  # 有効化用のメールを送信する
+  def send_activation_email
+    UserMailer.account_activation(self).deliver_now
+  end
+  
   # パスワード再設定の期限が切れている場合はtrueを返す
   def password_reset_expired?
     reset_sent_at < 2.hours.ago
   end
+  
+  # アカウントを有効にする
+  def activate
+    update_attribute(:activated,    true)
+    update_attribute(:activated_at, Time.zone.now)
+  end
+
+
+
   private
+  
+  # メールアドレスをすべて小文字にする
+    def downcase_email
+      self.email = email.downcase
+    end
+
+    # 有効化トークンとダイジェストを作成および代入する
+    def create_activation_digest
+      self.activation_token  = User.new_token
+      self.activation_digest = User.digest(activation_token)
+    end
 end
